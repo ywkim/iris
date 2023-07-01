@@ -47,20 +47,6 @@ print("Listening ... (press Ctrl+C to exit)")
 
 
 def transcribe():
-    output_path = "command.wav"
-    wav_file = wave.open(output_path, "w")
-    wav_file.setnchannels(1)
-    wav_file.setsampwidth(2)
-    wav_file.setframerate(16000)
-
-    for _ in range(
-        int(3 * porcupine.sample_rate / porcupine.frame_length)
-    ):  # 3 seconds
-        command_pcm = recorder.read()
-        wav_file.writeframes(struct.pack("h" * len(command_pcm), *command_pcm))
-
-    wav_file.close()
-
     with open("command.wav", "rb") as f:
         transcription = openai.Audio.transcribe("whisper-1", f, language=LANGUAGE)
 
@@ -86,6 +72,90 @@ def transcribe():
         except openai.error.ServiceUnavailableError:
             pass
 
+def listen():
+    import webrtcvad
+    import pyaudio
+    import collections
+    import struct
+    import wave
+
+    # Set sample rate and frame duration
+    SAMPLE_RATE = 16000
+    N_CHANNELS = 1
+    SAMPLE_WIDTH = 2  # 16 bit
+    CHUNK_DURATION_MS = 30  # 10, 20 or 30
+    CHUNK_SIZE = int(SAMPLE_RATE * CHUNK_DURATION_MS / 1000)  # chunk to read
+    PADDING_DURATION_MS = 1000  # chunk to read
+    PADDING_SIZE = int(SAMPLE_RATE * PADDING_DURATION_MS / 1000)  # chunk to read
+
+    # Create a VAD object
+    vad = webrtcvad.Vad()
+
+    # Set aggressiveness mode, which is a integer between 0 and 3. 0 is the least aggressive about filtering out non-speech, 3 is the most aggressive.
+    vad.set_mode(3)
+
+    # Initialize the microphone
+    pa = pyaudio.PyAudio()
+    sample_format = pa.get_format_from_width(SAMPLE_WIDTH)
+    audio_stream = pa.open(
+        format=sample_format,
+        rate=SAMPLE_RATE,
+        channels=N_CHANNELS,
+        input=True,
+        frames_per_buffer=CHUNK_SIZE)
+
+    # Create a wave file to store the audio
+    output_path = "command.wav"
+    wav_file = wave.open(output_path, "wb")
+    wav_file.setnchannels(N_CHANNELS)
+    wav_file.setsampwidth(pa.get_sample_size(sample_format))
+    wav_file.setframerate(SAMPLE_RATE)
+
+    # Read audio until voice command ends
+    while True:
+        # Read a chunk of raw audio data from the microphone
+        pcm = audio_stream.read(CHUNK_SIZE)
+
+        # Convert raw data to int16 array
+        # n_samples_per_buffer = n_frames_per_buffer * N_CHANNELS
+        # in_data = struct.unpack("%dh" % n_samples_per_buffer, chunk)
+        # pcm = struct.unpack_from("h" * 1024, pcm)
+
+        # Use VAD to check if the current chunk contains speech
+        is_speech = vad.is_speech(pcm, SAMPLE_RATE)
+
+        # If the audio data contains speech, write it to the wave file
+        if is_speech:
+            print("Voice detected, start recording")
+            wav_file.writeframes(pcm)
+
+            # If speech is detected, continue reading audio chunks
+            # until no speech is detected
+            while True:
+                is_speech = False
+                for _ in range(PADDING_SIZE // CHUNK_SIZE):
+                    pcm = audio_stream.read(CHUNK_SIZE)
+                    wav_file.writeframes(pcm)
+                    if vad.is_speech(pcm, SAMPLE_RATE):
+                        print("Speech detected")
+                        is_speech = True
+                    else:
+                        print("Speech not detected")
+                if not is_speech:
+                    print("Speech ended")
+                    break
+            break
+        else:
+            print("No speech detected")
+
+    # Stop the recording
+    audio_stream.stop_stream()
+    audio_stream.close()
+    pa.terminate()
+    wav_file.close()
+
+    transcribe()
+
 
 try:
     while True:
@@ -95,7 +165,7 @@ try:
         if result >= 0:
             print("[%s] Detected %s" % (str(datetime.now()), keywords[result]))
 
-            transcribe()
+            listen()
         else:
             print("Not detected")
 
