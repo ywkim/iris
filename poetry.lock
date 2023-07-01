@@ -745,6 +745,17 @@ files = [
 ]
 
 [[package]]
+name = "pvrecorder"
+version = "1.1.2"
+description = "Recorder library for Picovoice."
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "pvrecorder-1.1.2-py3-none-any.whl", hash = "sha256:fa30203884e426b80b4879f0d026e48555c332d01abddfe4ead7b03ff458826b"},
+    {file = "pvrecorder-1.1.2.tar.gz", hash = "sha256:09ecbf2302bce404e3696db2b513e12404adb3d2f5a257d645ce6ebf525366b8"},
+]
+
+[[package]]
 name = "pylint"
 version = "2.17.4"
 description = "python code static checker"
@@ -1072,4 +1083,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "ebd74470587fca7ef6ea2d49533e7ab46483f2ff71305295920fa734adbba18a"
+content-hash = "4de374d8609291f51311bba454d940ab7ba6e653c8fccf47fdb8879a7acbde76"
