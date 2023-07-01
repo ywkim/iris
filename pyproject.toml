@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "iris"
+version = "0.1.0"
+description = ""
+authors = ["Youngwook Kim <youngwook.kim@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pvporcupine = "^2.2.1"
+openai = "^0.27.8"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+pylint = "^2.17.4"
+mypy = "^1.4.1"
+pyright = "^1.1.316"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
