@@ -1,12 +1,10 @@
-import os
-import openai
-import struct
 import json
-from datetime import datetime
-import wave
+import struct
 import subprocess
+import wave
+from datetime import datetime
 
-
+import openai
 import pvporcupine
 from pvrecorder import PvRecorder
 
