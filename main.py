@@ -9,7 +9,8 @@ import pvporcupine
 import speech_recognition as sr
 from pvrecorder import PvRecorder
 
-access_key = "YOUR_ACCESS_KEY"
+# Wake word detection
+picovoice_access_key = os.getenv("PICOVOICE_PICOVOICE_ACCESS_KEY")
 
 # ISO-639-1 format
 LANGUAGE = "ko"
@@ -17,22 +18,20 @@ LANGUAGE = "ko"
 KEYWORD_PATH = "iris_ko_mac_v2_2_0.ppn"
 MODEL_PATH = "porcupine_params_ko.pv"
 
-# Load your API key from an environment variable or secret management service
-# api_key = os.getenv("OPENAI_API_KEY")
-api_key = "YOUR_API_KEY"
-
-# OpenAI ChatCompletion params
+# OpenAI ChatCompletion
 GPT_MODEL = "gpt-3.5-turbo"
 SYSTEM_PROMPT = '너의 이름은 "이리스"야.'
+# Load your API key from an environment variable or secret management service
+openai_api_key = os.getenv("OPENAI_OPENAI_API_KEY")
 
 # Apple Voice
 VOICE = "Yuna"
 
-openai.api_key = api_key
+openai.openai_api_key = openai_api_key
 
 keywords = ["picovoice"]
 porcupine = pvporcupine.create(
-    access_key=access_key,
+    picovoice_access_key=picovoice_access_key,
     keyword_paths=[KEYWORD_PATH],
     model_path=MODEL_PATH,
 )
