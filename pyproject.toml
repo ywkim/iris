@@ -11,6 +11,7 @@ pvporcupine = "^2.2.1"
 openai = "^0.27.8"
 pvrecorder = "^1.1.2"
 speechrecognition = "^3.10.0"
+pyaudio = "^0.2.13"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
