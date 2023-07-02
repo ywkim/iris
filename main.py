@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import subprocess
 from datetime import datetime
 
 import openai
@@ -25,7 +24,7 @@ SYSTEM_PROMPT = '너의 이름은 "이리스"야.'
 openai_api_key = os.getenv("OPENAI_OPENAI_API_KEY")
 
 # Apple Voice
-VOICE = "Yuna"
+VOICE = "com.apple.voice.enhanced.ko-KR.Yuna"
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -72,7 +71,12 @@ def transcribe():
 
             response_content = response_message["content"]
 
-            subprocess.run(["say", "-v", VOICE, response_content])
+            import pyttsx3
+
+            engine = pyttsx3.init()
+            engine.setProperty('voice', VOICE)
+            engine.say(response_content)
+            engine.runAndWait()
 
         except openai.error.ServiceUnavailableError:
             pass
