@@ -1,8 +1,7 @@
 import json
-import struct
 import logging
+import os
 import subprocess
-import wave
 from datetime import datetime
 
 import openai
@@ -11,7 +10,7 @@ import speech_recognition as sr
 from pvrecorder import PvRecorder
 
 # Wake word detection
-picovoice_access_key = os.getenv("PICOVOICE_PICOVOICE_ACCESS_KEY")
+picovoice_access_key = os.getenv("PICOVOICE_ACCESS_KEY")
 
 # ISO-639-1 format
 LANGUAGE = "ko"
@@ -34,7 +33,7 @@ openai.openai_api_key = openai_api_key
 
 keywords = ["picovoice"]
 porcupine = pvporcupine.create(
-    picovoice_access_key=picovoice_access_key,
+    access_key=picovoice_access_key,
     keyword_paths=[KEYWORD_PATH],
     model_path=MODEL_PATH,
 )
