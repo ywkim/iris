@@ -1,125 +1,169 @@
-import json
+import configparser
 import logging
+import json
 import os
 from datetime import datetime
 
 import openai
 import pvporcupine
+import pyttsx3
 import speech_recognition as sr
 from pvrecorder import PvRecorder
 
-# Wake word detection
-picovoice_access_key = os.getenv("PICOVOICE_ACCESS_KEY")
-
-# ISO-639-1 format
-LANGUAGE = "ko"
-
-KEYWORD_PATH = "iris_ko_mac_v2_2_0.ppn"
-MODEL_PATH = "porcupine_params_ko.pv"
-
-# OpenAI ChatCompletion
-GPT_MODEL = "gpt-3.5-turbo"
-SYSTEM_PROMPT = '너의 이름은 "이리스"야.'
-# Load your API key from an environment variable or secret management service
-openai_api_key = os.getenv("OPENAI_OPENAI_API_KEY")
-
-# Apple Voice
-VOICE = "com.apple.voice.enhanced.ko-KR.Yuna"
+DEFAULT_CONFIG = {
+    'paths': {
+        'keyword_path': 'iris_ko_mac_v2_2_0.ppn',
+        'model_path': 'porcupine_params_ko.pv'
+    },
+    'settings': {
+        'language': 'ko',  # ISO-639-1 format
+        'gpt_model': 'gpt-3.5-turbo-16k',
+        'system_prompt': '너의 이름은 "이리스"야.',
+        'service_unavailable_message': "현재 OpenAI 서비스를 사용할 수 없습니다.",
+        'voice': 'com.apple.voice.enhanced.ko-KR.Yuna'
+    }
+}
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-openai.openai_api_key = openai_api_key
+class PorcupineWakeWordListener:
+    def __init__(self, access_key, keyword_paths, model_path):
+        self.porcupine = pvporcupine.create(
+            access_key=access_key,
+            keyword_paths=keyword_paths,
+            model_path=model_path
+        )
+        audio_device_index = -1
+        self.recorder = PvRecorder(device_index=audio_device_index, frame_length=self.porcupine.frame_length)
 
-keywords = ["picovoice"]
-porcupine = pvporcupine.create(
-    access_key=picovoice_access_key,
-    keyword_paths=[KEYWORD_PATH],
-    model_path=MODEL_PATH,
-)
+    def listen(self):
+        try:
+            self.recorder.start()
+            logging.info("Listening wake word ...")
 
-audio_device_index = -1
+            while True:
+                pcm = self.recorder.read()
+                keyword_idx = self.porcupine.process(pcm)
 
-recorder = PvRecorder(
-    device_index=audio_device_index, frame_length=porcupine.frame_length
-)
-recorder.start()
+                if keyword_idx >= 0:
+                    logging.info(f"[{datetime.now()}] Detected keyword")
+                    return keyword_idx
 
-print("Listening ... (press Ctrl+C to exit)")
+                else:
+                    logging.debug("Not detected")
+        finally:
+            self.recorder.stop()
+
+    def close(self):
+        self.recorder.delete()
+        self.porcupine.delete()
 
 
-def transcribe():
-    with open("command.wav", "rb") as f:
-        transcription = openai.Audio.transcribe("whisper-1", f, language=LANGUAGE)
+class TextToSpeech:
+    def __init__(self, voice):
+        self.engine = pyttsx3.init()
+        self.engine.setProperty('voice', voice)
 
-        command_text = transcription.get("text")
-        if not command_text:
-            logging.error("Failed to transribe audio")
-            return
-        logging.info("Transcribed command text: %s", command_text)
+    def speak(self, text):
+        self.engine.say(text)
+        self.engine.runAndWait()
 
+
+class WhisperTranscriber:
+    def __init__(self, language):
+        self.language = language
+
+    def transcribe(self, audio_file):
+        with open(audio_file, "rb") as f:
+            transcription = openai.Audio.transcribe(
+                "whisper-1",
+                f,
+                language=self.language
+            )
+            command_text = transcription.get("text")
+            logging.info("Transcribed command text: %s", command_text)
+            return command_text
+
+class Chat:
+    def __init__(self, model, system_prompt, service_unavailable_message):
+        self.model = model
+        self.system_prompt = system_prompt
+        self.service_unavailable_message = service_unavailable_message
+
+    def complete(self, command_text):
         try:
             response = openai.ChatCompletion.create(
-                model=GPT_MODEL,
+                model=self.model,
                 messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": command_text},
                 ],
             )
 
-            response_message = response["choices"][0]["message"]
-            print(response_message)
-
-            response_content = response_message["content"]
-
-            import pyttsx3
-
-            engine = pyttsx3.init()
-            engine.setProperty('voice', VOICE)
-            engine.say(response_content)
-            engine.runAndWait()
+            response_message = response["choices"][0]["message"]["content"]
+            logging.info("Chat Response: %s", response_message)
+            return response_message
 
         except openai.error.ServiceUnavailableError:
-            pass
+            return self.service_unavailable_message
+
+class VoiceActivityDetector:
+    def __init__(self):
+        self.recognizer = sr.Recognizer()
+
+        # Adjust the noise level
+        with sr.Microphone() as source:
+            logging.info("Adjusting for noise...")
+            self.recognizer.adjust_for_ambient_noise(source)
+            logging.info("Done")
+
+    def listen(self, audio_file):
+        # Listen for a voice command until it ends
+        with sr.Microphone() as source:
+            logging.info("Listening...")
+            audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)
+            logging.info("Finished listening")
+
+        # Save audio as WAV file
+        with open(audio_file, "wb") as out:
+            out.write(audio.get_wav_data())
+
+class Iris:
+    def __init__(self, config):
+        self.config = config
+        self.wake = PorcupineWakeWordListener(
+            config.get('api', 'picovoice_access_key'),
+            [config.get('paths', 'keyword_path')],
+            config.get('paths', 'wake_model_path')
+        )
+        self.vad = VoiceActivityDetector()
+        openai.api_key = config.get('api', 'openai_api_key')
+        self.transcriber = WhisperTranscriber(self.config.get('settings', 'language'))
+        self.chat = Chat(self.config.get('settings', 'chat_model'), self.config.get('settings', 'system_prompt'), self.config.get('settings', 'service_unavailable_message'))
+        self.tts = TextToSpeech(self.config.get('settings', 'voice'))
+
+    def run(self):
+        try:
+            while True:
+                self.wake.listen()
+                self.vad.listen("command.wav")
+                command_text = self.transcriber.transcribe("command.wav")
+                if not command_text:
+                    logging.error("Failed to transribe audio")
+                    continue
+                response_message = self.chat.complete(command_text)
+                self.tts.speak(response_message)
+
+        except KeyboardInterrupt:
+            logging.info("Stopping...")
+        finally:
+            self.wake.close()
 
 
-try:
-    # Initialize the recognizer
-    r = sr.Recognizer()
+if __name__ == "__main__":
+    config = configparser.ConfigParser()
+    config.read_dict(DEFAULT_CONFIG)
+    config.read('config.ini')
 
-    # Adjust the noise level
-    with sr.Microphone() as source:
-        print("Adjusting for noise...")
-        r.adjust_for_ambient_noise(source)
-        print("Done")
-
-    while True:
-        pcm = recorder.read()
-        result = porcupine.process(pcm)
-
-        if result >= 0:
-            print("[%s] Detected %s" % (str(datetime.now()), keywords[result]))
-
-            import speech_recognition as sr
-
-            # Open the microphone as a source
-            with sr.Microphone() as source:
-                # Listen for a voice command until it ends
-                print("Listening...")
-                audio = r.listen(source, timeout=5, phrase_time_limit=10)
-                print("Finished listening")
-
-            # 오디오를 WAV 파일로 저장
-            with open("command.wav", "wb") as out:
-                out.write(audio.get_wav_data())
-
-            transcribe()
-        else:
-            print("Not detected")
-
-except KeyboardInterrupt:
-    print("Stopping ...")
-finally:
-    recorder.delete()
-    porcupine.delete()
-    # if wav_file is not None:
-    #     wav_file.close()
+    iris = Iris(config)
+    iris.run()
