@@ -13,30 +13,33 @@ import speech_recognition as sr
 from pvrecorder import PvRecorder
 
 DEFAULT_CONFIG = {
-    'paths': {
-        'keyword_path': 'iris_ko_mac_v2_2_0.ppn',
-        'model_path': 'porcupine_params_ko.pv'
+    "paths": {
+        "keyword_path": "iris_ko_mac_v2_2_0.ppn",
+        "model_path": "porcupine_params_ko.pv",
     },
-    'settings': {
-        'language': 'ko',  # ISO-639-1 format
-        'gpt_model': 'gpt-3.5-turbo-16k',
-        'system_prompt': '너의 이름은 "이리스"야.',
-        'service_unavailable_message': "현재 OpenAI 서비스를 사용할 수 없습니다.",
-        'voice': 'com.apple.voice.enhanced.ko-KR.Yuna'
-    }
+    "settings": {
+        "language": "ko",  # ISO-639-1 format
+        "gpt_model": "gpt-3.5-turbo-16k",
+        "system_prompt": '너의 이름은 "이리스"야.',
+        "service_unavailable_message": "현재 OpenAI 서비스를 사용할 수 없습니다.",
+        "voice": "com.apple.voice.enhanced.ko-KR.Yuna",
+    },
 }
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 class PorcupineWakeWordListener:
     def __init__(self, access_key, keyword_paths, model_path):
         self.porcupine = pvporcupine.create(
-            access_key=access_key,
-            keyword_paths=keyword_paths,
-            model_path=model_path
+            access_key=access_key, keyword_paths=keyword_paths, model_path=model_path
         )
         audio_device_index = -1
-        self.recorder = PvRecorder(device_index=audio_device_index, frame_length=self.porcupine.frame_length)
+        self.recorder = PvRecorder(
+            device_index=audio_device_index, frame_length=self.porcupine.frame_length
+        )
 
     def __enter__(self):
         return self
@@ -70,7 +73,7 @@ class PorcupineWakeWordListener:
 class SpeechSynthesizer:
     def __init__(self, voice):
         self.engine = pyttsx4.init()
-        self.engine.setProperty('voice', voice)
+        self.engine.setProperty("voice", voice)
 
     def speak(self, text):
         self.engine.say(text)
@@ -90,13 +93,12 @@ class WhisperTranscriber:
     def transcribe(self, audio_file_name):
         with open(audio_file_name, "rb") as f:
             transcription = openai.Audio.transcribe(
-                "whisper-1",
-                f,
-                language=self.language
+                "whisper-1", f, language=self.language
             )
             command_text = transcription.get("text")
             logging.info("Transcribed command text: %s", command_text)
             return command_text
+
 
 class Chat:
     def __init__(self, model, system_prompt, service_unavailable_message):
@@ -120,6 +122,7 @@ class Chat:
 
         except openai.error.ServiceUnavailableError:
             return self.service_unavailable_message
+
 
 class VoiceActivityDetector:
     def __init__(self):
@@ -175,27 +178,26 @@ class Iris:
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read_dict(DEFAULT_CONFIG)
-    config.read('config.ini')
+    config.read("config.ini")
 
     with PorcupineWakeWordListener(
-        config.get('api', 'picovoice_access_key'),
-        [config.get('paths', 'keyword_path')],
-        config.get('paths', 'wake_model_path')
+        config.get("api", "picovoice_access_key"),
+        [config.get("paths", "keyword_path")],
+        config.get("paths", "wake_model_path"),
     ) as wake:
-
         vad = VoiceActivityDetector()
 
-        openai.api_key = config.get('api', 'openai_api_key')
+        openai.api_key = config.get("api", "openai_api_key")
 
-        stt = WhisperTranscriber(config.get('settings', 'language'))
+        stt = WhisperTranscriber(config.get("settings", "language"))
 
         chat = Chat(
-            config.get('settings', 'chat_model'),
-            config.get('settings', 'system_prompt'),
-            config.get('settings', 'service_unavailable_message')
+            config.get("settings", "chat_model"),
+            config.get("settings", "system_prompt"),
+            config.get("settings", "service_unavailable_message"),
         )
 
-        tts = SpeechSynthesizer(config.get('settings', 'voice'))
+        tts = SpeechSynthesizer(config.get("settings", "voice"))
 
         iris = Iris(config, wake, vad, stt, chat, tts)
         iris.run()
