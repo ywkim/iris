@@ -34,6 +34,7 @@ dist/
 
 # Flycheck
 flycheck_*.el
+flycheck_*.py
 
 # server auth directory
 /server/
