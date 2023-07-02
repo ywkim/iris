@@ -12,17 +12,16 @@ import pyttsx4
 import speech_recognition as sr
 from pvrecorder import PvRecorder
 
+DEFAULT_KEYWORD = "jarvis"
+
 DEFAULT_CONFIG = {
     "paths": {
-        "keyword_path": "iris_ko_mac_v2_2_0.ppn",
-        "model_path": "porcupine_params_ko.pv",
+        "keyword_path": pvporcupine.KEYWORD_PATHS[DEFAULT_KEYWORD],
     },
     "settings": {
-        "language": "ko",  # ISO-639-1 format
-        "gpt_model": "gpt-3.5-turbo-16k",
-        "system_prompt": '너의 이름은 "이리스"야.',
-        "service_unavailable_message": "현재 OpenAI 서비스를 사용할 수 없습니다.",
-        "voice": "com.apple.voice.enhanced.ko-KR.Yuna",
+        "chat_model": "gpt-3.5-turbo",
+        "system_prompt": "You are a helpful assistant.",
+        "service_unavailable_message": "OpenAI service is currently unavailable.",
     },
 }
 
@@ -71,9 +70,10 @@ class PorcupineWakeWordListener:
 
 
 class SpeechSynthesizer:
-    def __init__(self, voice):
+    def __init__(self, voice=None):
         self.engine = pyttsx4.init()
-        self.engine.setProperty("voice", voice)
+        if voice:
+            self.engine.setProperty("voice", voice)
 
     def speak(self, text):
         self.engine.say(text)
@@ -88,6 +88,7 @@ class SpeechSynthesizer:
 
 class WhisperTranscriber:
     def __init__(self, language):
+        # language: ISO-639-1 format
         self.language = language
 
     def transcribe(self, audio_file_name):
@@ -183,13 +184,13 @@ if __name__ == "__main__":
     with PorcupineWakeWordListener(
         config.get("api", "picovoice_access_key"),
         [config.get("paths", "keyword_path")],
-        config.get("paths", "wake_model_path"),
+        config.get("paths", "wake_model_path", fallback=None),
     ) as wake:
         vad = VoiceActivityDetector()
 
         openai.api_key = config.get("api", "openai_api_key")
 
-        stt = WhisperTranscriber(config.get("settings", "language"))
+        stt = WhisperTranscriber(config.get("settings", "language", fallback=None))
 
         chat = Chat(
             config.get("settings", "chat_model"),
@@ -197,7 +198,7 @@ if __name__ == "__main__":
             config.get("settings", "service_unavailable_message"),
         )
 
-        tts = SpeechSynthesizer(config.get("settings", "voice"))
+        tts = SpeechSynthesizer(config.get("settings", "voice", fallback=None))
 
         iris = Iris(config, wake, vad, stt, chat, tts)
         iris.run()
