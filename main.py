@@ -2,11 +2,12 @@ import configparser
 import logging
 import json
 import os
+import time
 from datetime import datetime
 
 import openai
 import pvporcupine
-import pyttsx3
+import pyttsx4
 import speech_recognition as sr
 from pvrecorder import PvRecorder
 
@@ -59,14 +60,20 @@ class PorcupineWakeWordListener:
         self.porcupine.delete()
 
 
-class TextToSpeech:
+class SpeechSynthesizer:
     def __init__(self, voice):
-        self.engine = pyttsx3.init()
+        self.engine = pyttsx4.init()
         self.engine.setProperty('voice', voice)
 
     def speak(self, text):
         self.engine.say(text)
-        self.engine.runAndWait()
+        # If we use runAndWait, there is an issue that the program terminates
+        # abnormally.
+        self.engine.startLoop(False)
+        self.engine.iterate()
+        while self.engine.isBusy():
+            time.sleep(0.1)
+        self.engine.endLoop()
 
 
 class WhisperTranscriber:
@@ -138,16 +145,16 @@ class Iris:
         )
         self.vad = VoiceActivityDetector()
         openai.api_key = config.get('api', 'openai_api_key')
-        self.transcriber = WhisperTranscriber(self.config.get('settings', 'language'))
+        self.stt = WhisperTranscriber(self.config.get('settings', 'language'))
         self.chat = Chat(self.config.get('settings', 'chat_model'), self.config.get('settings', 'system_prompt'), self.config.get('settings', 'service_unavailable_message'))
-        self.tts = TextToSpeech(self.config.get('settings', 'voice'))
+        self.tts = SpeechSynthesizer(self.config.get('settings', 'voice'))
 
     def run(self):
         try:
             while True:
                 self.wake.listen()
                 self.vad.listen("command.wav")
-                command_text = self.transcriber.transcribe("command.wav")
+                command_text = self.stt.transcribe("command.wav")
                 if not command_text:
                     logging.error("Failed to transribe audio")
                     continue
