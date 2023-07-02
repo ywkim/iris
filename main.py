@@ -1,5 +1,6 @@
 import json
 import struct
+import logging
 import subprocess
 import wave
 from datetime import datetime
@@ -27,6 +28,8 @@ openai_api_key = os.getenv("OPENAI_OPENAI_API_KEY")
 # Apple Voice
 VOICE = "Yuna"
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
 openai.openai_api_key = openai_api_key
 
 keywords = ["picovoice"]
@@ -50,9 +53,12 @@ def transcribe():
     with open("command.wav", "rb") as f:
         transcription = openai.Audio.transcribe("whisper-1", f, language=LANGUAGE)
 
-        print(json.dumps(transcription, ensure_ascii=False))
+        command_text = transcription.get("text")
+        if not command_text:
+            logging.error("Failed to transribe audio")
+            return
+        logging.info("Transcribed command text: %s", command_text)
 
-        command_text = transcription["text"]
         try:
             response = openai.ChatCompletion.create(
                 model=GPT_MODEL,
