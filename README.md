@@ -133,7 +133,7 @@ Before contributing, please make sure to read and follow our Code of Conduct and
 
 We have a vibrant and growing community of users and contributors. If you have questions, want to share your experiences, or just want to say hi, please join us!
 
-- **Discord**: We have a [Discord server](https://discord.gg/yourdiscordlink) where you can chat with other users and contributors, ask questions, and get help.
+- **Discord**: We have a [Discord server](https://discord.gg/3cWK9Qmv) where you can chat with other users and contributors, ask questions, and get help.
 
 - **GitHub Discussions**: We use [GitHub Discussions](https://github.com/ywkim/iris/discussions) for more structured conversations and Q&A. It's a great place to ask for help, share your ideas, or discuss your use cases.
 
