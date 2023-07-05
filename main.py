@@ -1,15 +1,3 @@
-from langchain import SerpAPIWrapper
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage
-from langchain.agents import (
-    AgentType,
-    initialize_agent,
-    load_tools,
-    Tool,
-)
-from langchain.memory import ConversationBufferMemory
-
-
 import configparser
 import json
 import logging
@@ -22,6 +10,12 @@ import openai
 import pvporcupine
 import pyttsx4
 import speech_recognition as sr
+from langchain import SerpAPIWrapper
+from langchain.agents import (AgentType, Tool, initialize_agent)
+from langchain.chat_models import ChatOpenAI
+from langchain.memory import ConversationBufferMemory
+from langchain.prompts import MessagesPlaceholder
+from langchain.schema import SystemMessage
 from pvrecorder import PvRecorder
 
 DEFAULT_KEYWORD = "jarvis"
@@ -181,8 +175,10 @@ if __name__ == "__main__":
 
         stt = WhisperTranscriber(config.get("settings", "language", fallback=None))
 
+        system_prompt = SystemMessage(content=config.get("settings", "system_prompt"))
         agent_kwargs = {
             "extra_prompt_messages": [MessagesPlaceholder(variable_name="memory")],
+            "system_message": system_prompt,
         }
         memory = ConversationBufferMemory(memory_key="memory", return_messages=True)
         chat = ChatOpenAI(
@@ -197,13 +193,11 @@ if __name__ == "__main__":
                 description="useful for when you need to answer questions about current events. You should ask targeted questions",
             )
         ]
-        template = config.get("settings", "system_prompt")
-        system_message_prompt = SystemMessagePromptTemplate.from_template(template)
-        human_template = "{command_text}"
-        human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
-        ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
         agent = initialize_agent(
-            tools, chat, agent=AgentType.OPENAI_FUNCTIONS, verbose=True
+            tools,
+            chat,
+            agent=AgentType.OPENAI_FUNCTIONS,
+            verbose=True,
             agent_kwargs=agent_kwargs,
             memory=memory,
         )
