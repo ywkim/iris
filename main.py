@@ -1,5 +1,6 @@
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
+from langchain.agents import AgentType, initialize_agent, load_tools
 
 import configparser
 import json
@@ -176,12 +177,13 @@ if __name__ == "__main__":
             model_name=config.get("settings", "chat_model"),
             temperature=config.get("settings", "temperature"),
         )
+        tools = load_tools(["serpapi"])
         template = config.get("settings", "system_prompt")
         system_message_prompt = SystemMessagePromptTemplate.from_template(template)
         human_template = "{command_text}"
         human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
         ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
-        chain = LLMChain(llm=chat, prompt=prompt)
+        agent = initialize_agent(tools, chat, agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 
         tts = SpeechSynthesizer(config.get("settings", "voice", fallback=None))
 
