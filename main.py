@@ -1,6 +1,13 @@
+from langchain import SerpAPIWrapper
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
-from langchain.agents import AgentType, initialize_agent, load_tools
+from langchain.agents import (
+    AgentType,
+    initialize_agent,
+    load_tools,
+    Tool,
+)
+
 
 import configparser
 import json
@@ -129,12 +136,12 @@ class VoiceActivityDetector:
 
 
 class Iris:
-    def __init__(self, config, wake, vad, stt, chat, tts):
+    def __init__(self, config, wake, vad, stt, agent, tts):
         self.config = config
         self.wake = wake
         self.vad = vad
         self.stt = stt
-        self.chat = chat
+        self.agent = agent
         self.tts = tts
 
     def run(self):
@@ -147,8 +154,8 @@ class Iris:
                     if not command_text:
                         logging.error("Failed to transcribe audio")
                         continue
-                    response_message = self.chat.run(command_text=command_text)
-                    logging.info("Chat Response: %s", response_message)
+                    response_message = self.agent.run(command_text=command_text)
+                    logging.info("Agent Response: %s", response_message)
                     self.tts.speak(response_message)
 
         except KeyboardInterrupt:
@@ -177,15 +184,24 @@ if __name__ == "__main__":
             model_name=config.get("settings", "chat_model"),
             temperature=config.get("settings", "temperature"),
         )
-        tools = load_tools(["serpapi"])
+        search = SerpAPIWrapper()
+        tools = [
+            Tool(
+                name="Search",
+                func=search.run,
+                description="useful for when you need to answer questions about current events. You should ask targeted questions",
+            )
+        ]
         template = config.get("settings", "system_prompt")
         system_message_prompt = SystemMessagePromptTemplate.from_template(template)
         human_template = "{command_text}"
         human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
         ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
-        agent = initialize_agent(tools, chat, agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+        agent = initialize_agent(
+            tools, chat, agent=AgentType.OPENAI_FUNCTIONS, verbose=True
+        )
 
         tts = SpeechSynthesizer(config.get("settings", "voice", fallback=None))
 
-        iris = Iris(config, wake, vad, stt, chain, tts)
+        iris = Iris(config, wake, vad, stt, agent, tts)
         iris.run()
