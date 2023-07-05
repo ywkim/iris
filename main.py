@@ -1,3 +1,6 @@
+from langchain.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage, SystemMessage
+
 import configparser
 import json
 import logging
@@ -21,7 +24,7 @@ DEFAULT_CONFIG = {
     "settings": {
         "chat_model": "gpt-3.5-turbo",
         "system_prompt": "You are a helpful assistant.",
-        "service_unavailable_message": "OpenAI service is currently unavailable.",
+        "temperature": 0.7,
     },
 }
 
@@ -101,30 +104,6 @@ class WhisperTranscriber:
             return command_text
 
 
-class Chat:
-    def __init__(self, model, system_prompt, service_unavailable_message):
-        self.model = model
-        self.system_prompt = system_prompt
-        self.service_unavailable_message = service_unavailable_message
-
-    def complete(self, command_text):
-        try:
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": command_text},
-                ],
-            )
-
-            response_message = response["choices"][0]["message"]["content"]
-            logging.info("Chat Response: %s", response_message)
-            return response_message
-
-        except openai.error.ServiceUnavailableError:
-            return self.service_unavailable_message
-
-
 class VoiceActivityDetector:
     def __init__(self):
         self.recognizer = sr.Recognizer()
@@ -167,7 +146,8 @@ class Iris:
                     if not command_text:
                         logging.error("Failed to transcribe audio")
                         continue
-                    response_message = self.chat.complete(command_text)
+                    response_message = self.chat.run(command_text=command_text)
+                    logging.info("Chat Response: %s", response_message)
                     self.tts.speak(response_message)
 
         except KeyboardInterrupt:
@@ -192,13 +172,18 @@ if __name__ == "__main__":
 
         stt = WhisperTranscriber(config.get("settings", "language", fallback=None))
 
-        chat = Chat(
-            config.get("settings", "chat_model"),
-            config.get("settings", "system_prompt"),
-            config.get("settings", "service_unavailable_message"),
+        chat = ChatOpenAI(
+            model_name=config.get("settings", "chat_model"),
+            temperature=config.get("settings", "temperature"),
         )
+        template = config.get("settings", "system_prompt")
+        system_message_prompt = SystemMessagePromptTemplate.from_template(template)
+        human_template = "{command_text}"
+        human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
+        ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
+        chain = LLMChain(llm=chat, prompt=prompt)
 
         tts = SpeechSynthesizer(config.get("settings", "voice", fallback=None))
 
-        iris = Iris(config, wake, vad, stt, chat, tts)
+        iris = Iris(config, wake, vad, stt, chain, tts)
         iris.run()

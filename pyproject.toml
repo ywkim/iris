@@ -6,13 +6,14 @@ authors = ["Youngwook Kim <youngwook.kim@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.8.1"
 pvporcupine = "^2.2.1"
 openai = "^0.27.8"
 pvrecorder = "^1.1.2"
 speechrecognition = "^3.10.0"
 pyaudio = "^0.2.13"
 pyttsx4 = "^3.0.15"
+langchain = {extras = ["llms"], version = "^0.0.223"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
