@@ -7,6 +7,7 @@ from langchain.agents import (
     load_tools,
     Tool,
 )
+from langchain.memory import ConversationBufferMemory
 
 
 import configparser
@@ -180,6 +181,10 @@ if __name__ == "__main__":
 
         stt = WhisperTranscriber(config.get("settings", "language", fallback=None))
 
+        agent_kwargs = {
+            "extra_prompt_messages": [MessagesPlaceholder(variable_name="memory")],
+        }
+        memory = ConversationBufferMemory(memory_key="memory", return_messages=True)
         chat = ChatOpenAI(
             model_name=config.get("settings", "chat_model"),
             temperature=config.get("settings", "temperature"),
@@ -199,6 +204,8 @@ if __name__ == "__main__":
         ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
         agent = initialize_agent(
             tools, chat, agent=AgentType.OPENAI_FUNCTIONS, verbose=True
+            agent_kwargs=agent_kwargs,
+            memory=memory,
         )
 
         tts = SpeechSynthesizer(config.get("settings", "voice", fallback=None))
