@@ -1,7 +1,5 @@
 import configparser
-import json
 import logging
-import os
 import tempfile
 import time
 from datetime import datetime
@@ -62,11 +60,10 @@ class PorcupineWakeWordListener:
                 keyword_idx = self.porcupine.process(pcm)
 
                 if keyword_idx >= 0:
-                    logging.info(f"[{datetime.now()}] Detected keyword")
+                    logging.info("[%s] Detected keyword", datetime.now())
                     return keyword_idx
 
-                else:
-                    logging.debug("Not detected")
+                logging.debug("Not detected")
         finally:
             self.recorder.stop()
 
@@ -149,7 +146,7 @@ class Iris:
                     if not command_text:
                         logging.error("Failed to transcribe audio")
                         continue
-                    response_message = self.agent.run(command_text=command_text)
+                    response_message = self.agent.run(command_text)
                     logging.info("Agent Response: %s", response_message)
                     self.tts.speak(response_message)
 
@@ -182,8 +179,8 @@ if __name__ == "__main__":
         }
         memory = ConversationBufferMemory(memory_key="memory", return_messages=True)
         chat = ChatOpenAI(
-            model_name=config.get("settings", "chat_model"),
-            temperature=config.get("settings", "temperature"),
+            model=config.get("settings", "chat_model"),
+            temperature=float(config.get("settings", "temperature")),
         )
         search = SerpAPIWrapper()
         tools = [
