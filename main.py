@@ -2,7 +2,6 @@ import configparser
 import logging
 import tempfile
 import time
-from datetime import datetime
 
 import openai
 import pvporcupine
@@ -60,7 +59,7 @@ class PorcupineWakeWordListener:
                 keyword_idx = self.porcupine.process(pcm)
 
                 if keyword_idx >= 0:
-                    logging.info("[%s] Detected keyword", datetime.now())
+                    logging.info("Detected keyword")
                     return keyword_idx
 
                 logging.debug("Not detected")
