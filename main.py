@@ -152,8 +152,6 @@ class Iris:
 
         except KeyboardInterrupt:
             logging.info("Stopping...")
-        finally:
-            self.wake.close()
 
 
 if __name__ == "__main__":
