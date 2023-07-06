@@ -163,6 +163,7 @@ Here are some resources that were helpful during the development of Iris:
 
 - [Picovoice Porcupine](https://picovoice.ai/products/porcupine/)
 - [OpenAI API](https://platform.openai.com/docs/)
+- [LangChain](https://python.langchain.com/docs/)
 - [SpeechRecognition](https://pypi.org/project/SpeechRecognition/)
 - [pyttsx4](https://github.com/Jiangshan00001/pyttsx4)
 
