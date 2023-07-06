@@ -1,5 +1,6 @@
 import configparser
 import logging
+import os
 import tempfile
 import time
 
@@ -7,8 +8,7 @@ import openai
 import pvporcupine
 import pyttsx4
 import speech_recognition as sr
-from langchain import SerpAPIWrapper
-from langchain.agents import AgentType, Tool, initialize_agent
+from langchain.agents import AgentType, initialize_agent, load_tools
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import MessagesPlaceholder
@@ -24,7 +24,8 @@ DEFAULT_CONFIG = {
     "settings": {
         "chat_model": "gpt-3.5-turbo",
         "system_prompt": "You are a helpful assistant.",
-        "temperature": 0.7,
+        "temperature": "0.7",
+        "tools": "serpapi",
     },
 }
 
@@ -153,6 +154,10 @@ class Iris:
             logging.info("Stopping...")
 
 
+def parse_list(list_of_str):
+    return [item.strip() for item in list_of_str.split(",")]
+
+
 if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read_dict(DEFAULT_CONFIG)
@@ -180,14 +185,9 @@ if __name__ == "__main__":
             temperature=float(config.get("settings", "temperature")),
             openai_api_key=config.get("api", "openai_api_key"),
         )
-        search = SerpAPIWrapper(serpapi_api_key=config.get("api", "serpapi_api_key"))
-        tools = [
-            Tool(
-                name="Search",
-                func=search.run,
-                description="useful for when you need to answer questions about current events. You should ask targeted questions",
-            )
-        ]
+        if not os.environ.get("SERPAPI_API_KEY"):
+            os.environ["SERPAPI_API_KEY"] = config.get("api", "serpapi_api_key")
+        tools = load_tools(parse_list(config.get("settings", "tools")))
         agent = initialize_agent(
             tools,
             chat,
