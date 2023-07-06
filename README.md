@@ -101,7 +101,7 @@ voice = com.apple.voice.premium.ko-KR.Yuna
 
 3. **System Prompt**: This setting allows you to customize the system prompt that is used in the chat feature. The default prompt is "You are a helpful assistant.". You can change this by specifying your custom prompt in the `system_prompt` setting under the `[settings]` section.
 
-4. **Tools**: This setting allows you to specify the tools that you want to use with LangChain. The tools should be specified as a comma-separated list. The available tools are listed in the [LangChain tools documentation](https://python.langchain.com/docs/modules/agents/tools/).
+4. **Tools**: The `tools` setting under the `[settings]` section allows you to specify the tools that you want to use with LangChain. The tools should be specified as a comma-separated list. The available tools are listed in the [LangChain tools documentation](https://python.langchain.com/docs/modules/agents/tools/).
 
 ## Usage
 
