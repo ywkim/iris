@@ -72,6 +72,7 @@ Configuration for Iris is done via a `config.ini` file. Here is an example of wh
 [api]
 openai_api_key = your_openai_api_key
 picovoice_access_key = your_picovoice_access_key
+serpapi_api_key = your_serpapi_api_key
 
 [paths]
 keyword_path = iris_ko_mac_v2_2_0.ppn
@@ -81,6 +82,7 @@ wake_model_path = porcupine_params_ko.pv
 language = ko
 chat_model = gpt-3.5-turbo-16k
 system_prompt = You are a helpful assistant.
+tools = serpapi
 voice = com.apple.voice.premium.ko-KR.Yuna
 ```
 
@@ -89,6 +91,7 @@ voice = com.apple.voice.premium.ko-KR.Yuna
 1. **Access Keys**
     - **OpenAI API Key**: This key is required for the chat feature. You can get this key from the [OpenAI website](https://beta.openai.com/signup/). Specify this key in the `openai_api_key` setting under the `[api]` section.
     - **Picovoice Access Key**: This key is required for the wake word feature. You can get this key from the [Picovoice Console](https://console.picovoice.ai/). Specify this key in the `picovoice_access_key` setting under the `[api]` section.
+    - **SerpAPI Key**: This key is required for the search feature. You can get this key from the [SerpAPI website](https://serpapi.com/). Specify this key in the `serpapi_api_key` setting under the `[api]` section.
 
 ### Optional Settings
 
@@ -97,6 +100,8 @@ voice = com.apple.voice.premium.ko-KR.Yuna
 2. **Voice**: This setting allows you to change the voice used by the TTS. The default voice is the system default. You can change this to any voice installed on your system by specifying the voice in the `voice` setting under the `[settings]` section.
 
 3. **System Prompt**: This setting allows you to customize the system prompt that is used in the chat feature. The default prompt is "You are a helpful assistant.". You can change this by specifying your custom prompt in the `system_prompt` setting under the `[settings]` section.
+
+4. **Tools**: This setting allows you to specify the tools that you want to use with LangChain. The tools should be specified as a comma-separated list. The available tools are listed in the [LangChain tools documentation](https://python.langchain.com/docs/modules/agents/tools/).
 
 ## Usage
 
