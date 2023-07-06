@@ -34,6 +34,8 @@ Iris offers a range of features designed to make your interactions with AI more 
 
 - **Conversational AI**: Iris can understand and respond to your commands in a conversational manner. Thanks to the GPT model, Iris can provide meaningful and contextually relevant responses.
 
+- **LangChain Integration**: Iris is integrated with LangChain, a powerful language model chaining library. This integration enhances Iris's capabilities by allowing it to utilize multiple tools and agents, providing more accurate and contextually relevant responses.
+
 - **Text-to-Speech**: Iris can speak to you. Using the pyttsx4 library, Iris can convert text responses into speech, providing a more natural interaction.
 
 - **Customizable and Extensible**: Iris is built with open-source technologies, making it fully customizable and extensible. You can add new features, improve existing ones, or even build your own voice assistant from scratch.
@@ -122,6 +124,8 @@ You can stop Iris at any time by pressing `Ctrl+C` in the terminal.
 - **OpenAI's Whisper ASR API**: For speech-to-text transcription, Iris uses OpenAI's Whisper ASR API, which is trained on 680,000 hours of multilingual and multitask supervised data collected from the web.
 
 - **OpenAI's GPT**: For generating responses to user commands, Iris uses OpenAI's GPT, a state-of-the-art language model.
+
+- **LangChain**: Iris uses LangChain to chain multiple language models and tools together, enhancing its capabilities and providing more accurate and contextually relevant responses.
 
 - **Porcupine**: For wake word detection, Iris uses Porcupine, a highly-accurate and lightweight wake word detection engine.
 
