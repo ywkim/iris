@@ -2,16 +2,17 @@
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Features](#features)
-3. [Installation](#installation)
-4. [Configuration](#configuration)
-5. [Usage](#usage)
-6. [Technology Stack](#technology-stack)
-7. [Contribution Guide](#contribution-guide)
-8. [Community](#community)
-9. [References](#references)
-10. [License](#license)
-11. [Contact](#contact)
+1. [Features](#features)
+1. [LangChain Integration](#langchain-integration)
+1. [Installation](#installation)
+1. [Configuration](#configuration)
+1. [Usage](#usage)
+1. [Technology Stack](#technology-stack)
+1. [Contribution Guide](#contribution-guide)
+1. [Community](#community)
+1. [References](#references)
+1. [License](#license)
+1. [Contact](#contact)
 
 ## Introduction
 
@@ -38,6 +39,14 @@ Iris offers a range of features designed to make your interactions with AI more 
 - **Customizable and Extensible**: Iris is built with open-source technologies, making it fully customizable and extensible. You can add new features, improve existing ones, or even build your own voice assistant from scratch.
 
 - **Community Support**: Join our growing community of developers and users. Whether you need help with a problem, want to share your ideas, or are looking to contribute to the project, our community is here to support you.
+
+## LangChain Integration
+
+Iris now incorporates [LangChain](https://python.langchain.com/), a powerful language model chaining library. LangChain enables chaining together multiple language models and tools, paving the way for more complex and powerful applications.
+
+The integration of LangChain has significantly expanded Iris's capabilities. Iris can now generate responses using OpenAI's language models and utilize a variety of tools provided by LangChain. One of these tools is SerpAPI, a search engine results page service. With SerpAPI, Iris can pull in real-time data from the web, making it possible to answer questions about current events or any topic that requires up-to-date information. This is a significant step forward, as it allows Iris to provide answers that are not only based on pre-existing knowledge but also on the most recent information available on the web.
+
+For more information on how to use LangChain and the tools it provides, please refer to the [official LangChain documentation](https://python.langchain.com/docs/get_started/quickstart) and the [tools documentation](https://python.langchain.com/docs/modules/agents/tools/).
 
 ## Installation
 
