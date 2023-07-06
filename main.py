@@ -8,7 +8,7 @@ import pvporcupine
 import pyttsx4
 import speech_recognition as sr
 from langchain import SerpAPIWrapper
-from langchain.agents import (AgentType, Tool, initialize_agent)
+from langchain.agents import AgentType, Tool, initialize_agent
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import MessagesPlaceholder
@@ -178,8 +178,9 @@ if __name__ == "__main__":
         chat = ChatOpenAI(
             model=config.get("settings", "chat_model"),
             temperature=float(config.get("settings", "temperature")),
+            openai_api_key=config.get("api", "openai_api_key"),
         )
-        search = SerpAPIWrapper()
+        search = SerpAPIWrapper(serpapi_api_key=config.get("api", "serpapi_api_key"))
         tools = [
             Tool(
                 name="Search",
